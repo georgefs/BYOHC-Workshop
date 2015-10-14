@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2015 george 
+# Copyright © 2015 george
 #
 # Distributed under terms of the MIT license.
 __all__ = ["parser", "pretty"]
@@ -32,10 +32,10 @@ def parse_tokens(tokens, parents=[]):
 
         ## lambda pattern
         if curr.startswith("\\"):
-            ## extra var name 
+            ## extra var name
             var = curr.replace("\\", "")
 
-            ## replace var name 
+            ## replace var name
             var_count += 1
             lambda_pattern = parents + [(var, var_count)]
 
@@ -55,8 +55,8 @@ def parse_tokens(tokens, parents=[]):
                 var_count += 1
                 var = var_count
             result.append(["var", var])
-    
-    ## merge 
+
+    ## merge
     while len(result) > 1:
         result = [["app", result[0], result[1]]] + result[2:]
 
@@ -68,15 +68,45 @@ def parser(lambda_query):
     return parse_tokens(tokens)
 
 
-def pretty(data):           
-    lambda_type = data[0]   
-    lambda_info = data[1:]  
+def pretty(data):
+    lambda_type = data[0]
+    lambda_info = data[1:]
     if lambda_type == 'app':
         return "(%s)(%s)" % (pretty(lambda_info[0]), pretty(lambda_info[1]))
     elif lambda_type == 'var':
         return lambda_info[0]
     elif lambda_type == 'lam':
-        return "\%s %s" % (lambda_info[0], pretty(lambda_info[1]))                                                                                                                                                   
+        return r"\%s %s" % (lambda_info[0], pretty(lambda_info[1]))
+
+def cover_var(lambda_tokens, var, value):
+    if lambda_tokens[0] == "var" and lambda_tokens[1] == var:
+        return value
+    elif lambda_tokens[0] == "app":
+        lambda_tokens[1] = cover_var(lambda_tokens[1], var, value)
+        lambda_tokens[2] = cover_var(lambda_tokens[2], var, value)
+    elif lambda_tokens[0] == "lam":
+        lambda_tokens[2] = cover_var(lambda_tokens[2], var, value)
+    return lambda_tokens
+
+def weak_normal(lambda_tokens):
+    var_tmp = []
+    while lambda_tokens[0] == "app" or var_tmp:
+        if lambda_tokens[0] == "app":
+            var_tmp.append(lambda_tokens[2])
+            lambda_tokens = lambda_tokens[1]
+        elif lambda_tokens[0] == "lam":
+            var_name = lambda_tokens[1]
+            var = var_tmp.pop()
+            lambda_tokens = lambda_tokens[2]
+            cover_var(lambda_tokens, var_name, var)
+        elif lambda_tokens[0] == "var":
+            break
+        else:
+            raise Exception('data type error')
+        
+    return lambda_tokens
+
+        
 
 if __name__ == '__main__':
     result = parser(r"(\a\b a)b (\a \b b)")
@@ -85,4 +115,6 @@ if __name__ == '__main__':
     print result1
     var_count = 0
     print parser(result1)
+    print weak_normal(result)
+
 
