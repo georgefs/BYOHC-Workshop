@@ -18,6 +18,7 @@ def find_brackets_pair(tokens):
         idx += 1
         if left == -1:
             return idx
+    raise Exception('brackets not pair')
 
 ## var count
 var_count = 0
@@ -44,7 +45,7 @@ def parse_tokens(tokens, parents=[]):
         ## () pattern
         elif curr == '(':
             pair = find_brackets_pair(tokens)
-            result.append(parse_tokens(tokens[:pair-1]), parents)
+            result.append(parse_tokens(tokens[:pair-1], parents))
             tokens = tokens[pair:]
 
         ## var pattern
@@ -78,7 +79,10 @@ def pretty(data):
         return "\%s %s" % (lambda_info[0], pretty(lambda_info[1]))                                                                                                                                                   
 
 if __name__ == '__main__':
-    result = parser(r"(\a\b a)b c")
+    result = parser(r"(\a\b a)b (\a \b b)")
     print result
-    print pretty(result)
+    result1 = pretty(result)
+    print result1
+    var_count = 0
+    print parser(result1)
 
