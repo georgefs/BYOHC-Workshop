@@ -110,14 +110,27 @@ def weak_normal_form(lambda_tokens):
     return lambda_tokens
 
         
+def normal_form(lambda_tokens):
+    if lambda_tokens[0] == "lam":
+        lambda_tokens = ["lam", lambda_tokens[1], normal_form(lambda_tokens[2])]
+    elif lambda_tokens[0] == "app":
+        lambda_tokens = weak_normal_form(lambda_tokens)
+        if lambda_tokens[0] == "app":
+            lambda_tokens[1] = normal_form(lambda_tokens[1])
+            lambda_tokens[2] = normal_form(lambda_tokens[2])
+        elif lambda_tokens[0] == "lam":
+            lambda_tokens = normal_form(lambda_tokens)
+
+    return lambda_tokens
 
 if __name__ == '__main__':
-    result = parser(r"(\a\b a)b (\a \b b) c")
+    result = parser(r"(\a (\b a b)(e))")
     print result
     result1 = pretty(result)
     print result1
     var_count = 0
     print parser(result1)
     print weak_normal_form(result)
+    print normal_form(result)
 
 
