@@ -21,9 +21,7 @@ def find_brackets_pair(tokens):
     raise Exception('brackets not pair')
 
 ## var count
-var_count = 0
-def parse_tokens(tokens, parents=[]):
-    global var_count
+def parse_tokens(tokens):
     result = []
     idx = 0
     while tokens:
@@ -34,27 +32,18 @@ def parse_tokens(tokens, parents=[]):
         if curr.startswith("\\"):
             ## extra var name
             var = curr.replace("\\", "")
-
-            ## replace var name
-            var_count += 1
-            lambda_pattern = parents + [(var, var_count)]
-
-            result.append(["lam", var_count, parse_tokens(tokens, lambda_pattern)])
+            result.append(["lam", var, parse_tokens(tokens)])
             break
 
         ## () pattern
         elif curr == '(':
             pair = find_brackets_pair(tokens)
-            result.append(parse_tokens(tokens[:pair-1], parents))
+            result.append(parse_tokens(tokens[:pair-1]))
             tokens = tokens[pair:]
 
         ## var pattern
         else:
-            var = dict(parents).get(curr, False)
-            if not var:
-                var_count += 1
-                var = var_count
-            result.append(["var", var])
+            result.append(["var", curr])
 
     ## merge
     while len(result) > 1:
@@ -89,14 +78,37 @@ def cover_var(lambda_tokens, var, value):
     return lambda_tokens
 
 def weak_normal_form(lambda_tokens):
+
+    def trans_var_name(lambda_tokens, parents=[]):
+        if lambda_tokens[0] == "app":
+            trans_var_name(lambda_tokens[1], parents)
+            trans_var_name(lambda_tokens[2], parents)
+        elif lambda_tokens[0] == "lam":
+            trans_var_name.var_idx += 1
+            var_name = "@{}".format(trans_var_name.var_idx)
+            lambda_tokens[2] = trans_var_name(lambda_tokens[2], parents + [(lambda_tokens[1], "@{}".format(trans_var_name.var_idx))])
+            lambda_tokens[1] = var_name
+        elif lambda_tokens[0] == "var":
+            var_name = dict(parents).get(lambda_tokens[1], False)
+            if not var_name:
+                trans_var_name.var_idx+=1 
+                var_name = "@{}".format(trans_var_name.var_idx)
+            lambda_tokens[1] = var_name
+        return lambda_tokens
+    trans_var_name.var_idx = 0
+
+    
     var_tmp = []
     while lambda_tokens[0] == "app" or var_tmp:
+
         if lambda_tokens[0] == "app":
             var_tmp.append(lambda_tokens[2])
             lambda_tokens = lambda_tokens[1]
         elif lambda_tokens[0] == "lam":
             var_name = lambda_tokens[1]
-            var = var_tmp.pop()
+            curr = var_tmp.pop()
+            var = trans_var_name(copy.deepcopy(curr))
+
             lambda_tokens = lambda_tokens[2]
             cover_var(lambda_tokens, var_name, var)
         elif lambda_tokens[0] == "var":
@@ -124,13 +136,14 @@ def normal_form(lambda_tokens):
     return lambda_tokens
 
 if __name__ == '__main__':
-    result = parser(r"(\a (\b a b)(e))")
-    print result
+    result = parser(r"""
+    (\a \b \c a c c )(\a \b (a b) (\a \b b))(\a \b b)(\a \b a)
+
+            """)
+
     result1 = pretty(result)
-    print result1
-    var_count = 0
-    print parser(result1)
+    parser(result1)
+
     print weak_normal_form(result)
-    print normal_form(result)
 
 
