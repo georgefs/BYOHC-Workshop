@@ -103,13 +103,16 @@ def weak_normal(lambda_tokens):
             break
         else:
             raise Exception('data type error')
+
+    while var_tmp:
+        lambda_tokens = ["app", lambda_tokens, var_tmp.pop()]
         
     return lambda_tokens
 
         
 
 if __name__ == '__main__':
-    result = parser(r"(\a\b a)b (\a \b b)")
+    result = parser(r"(\a\b a)b (\a \b b) c")
     print result
     result1 = pretty(result)
     print result1
