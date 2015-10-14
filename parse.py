@@ -4,7 +4,7 @@
 # Copyright © 2015 george
 #
 # Distributed under terms of the MIT license.
-__all__ = ["parser", "pretty"]
+__all__ = ["parser", "pretty", "weak_normal_form"]
 import copy
 
 def find_brackets_pair(tokens):
@@ -88,7 +88,7 @@ def cover_var(lambda_tokens, var, value):
         lambda_tokens[2] = cover_var(lambda_tokens[2], var, value)
     return lambda_tokens
 
-def weak_normal(lambda_tokens):
+def weak_normal_form(lambda_tokens):
     var_tmp = []
     while lambda_tokens[0] == "app" or var_tmp:
         if lambda_tokens[0] == "app":
@@ -118,6 +118,6 @@ if __name__ == '__main__':
     print result1
     var_count = 0
     print parser(result1)
-    print weak_normal(result)
+    print weak_normal_form(result)
 
 
